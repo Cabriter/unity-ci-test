@@ -1,0 +1,41 @@
+name: Build Android
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # 缓存 Library 目录，加速重复构建
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-Android-${{ hashFiles('Packages/manifest.json') }}
+          restore-keys: |
+            Library-Android-
+
+      # 构建 Android 包（需要 UNITY_LICENSE secret）
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          projectPath: .
+          unityVersion: 6000.3.14f1
+          targetPlatform: Android
+          buildMethod: BuildCommand.Build
+
+      # 上传 APK 作为 workflow artifact
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Android
+          path: build/Android
+          retention-days: 14
