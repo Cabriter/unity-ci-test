@@ -20,22 +20,20 @@ unity-ci-test/
 
 ## 一次性配置：Unity 许可证（必须）
 
-CI 构建需要一个有效的 Unity 许可证。本项目采用**手动激活 .ulf 文件**的方式（不依赖账号密码）：
+CI 构建需要一个**国际版 Unity 账号**，构建时用账号密码自动激活个人许可证（Personal License）。
 
-1. 打开 **Unity Hub → Preferences（齿轮）→ Licenses → Add → Get a free personal license**。
-2. 添加后，若提示激活方式，选择 **Manual activation（手动激活）**，点击 **Save license request** 生成 `.alf` 文件。
-3. 浏览器打开 <https://license.unity3d.com/manual>，上传刚才的 `.alf` 文件，许可证类型选 **Unity Personal Edition**，点击 Next。
-4. 下载生成的 `.ulf` 文件（如 `Unity_lic.ulf`），用文本编辑器打开并**复制全部内容**。
-5. 在 GitHub 仓库 **Settings → Secrets and variables → Actions → New repository secret**：
-   - **Name**: `UNITY_LICENSE`
-   - **Secret**: 粘贴 `.ulf` 文件的完整内容
+1. 到 <https://unity.com> 注册/登录一个 Unity ID（注意：国际版账号与团结引擎 unity.cn 账号是两套体系，不通用）。
+2. 在 GitHub 仓库 **Settings → Secrets and variables → Actions → New repository secret** 添加两个 secret：
+   - **Name**: `UNITY_EMAIL`  →  **Secret**: 你的 Unity ID 邮箱
+   - **Name**: `UNITY_PASSWORD`  →  **Secret**: 你的 Unity ID 密码
 
-> 注意：`.ulf` 内容含 XML 标签，需完整粘贴（包括 `<root> ... </root>`）。
-> 如果本地已经激活过个人许可证，也可以直接把 `C:\ProgramData\Unity\Unity_lic.ulf`（Windows）或 `/Library/Application Support/Unity/Unity_lic.ulf`（macOS）的内容复制进去。
+> 注意：
+> - 个人许可证（Personal）有同时激活机器数上限（一般 2 台）；如需频繁构建，可进一步配合缓存激活结果。
+> - 若账号密码激活失败，也欢迎改用 `UNITY_LICENSE`（手动激活的 `.ulf`）方式。
 
 ## 触发构建
 
-配置好 `UNITY_LICENSE` secret 后：
+配置好 `UNITY_EMAIL` / `UNITY_PASSWORD` 两个 secret 后：
 
 - **推送代码**到 `main` 分支会自动触发；
 - 也可以到 **Actions 标签页 → Build Android → Run workflow** 手动触发。
