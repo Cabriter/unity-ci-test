@@ -20,29 +20,29 @@ unity-ci-test/
 
 ## 一次性配置：Unity 许可证（必须）
 
-Unity 6 的个人许可证（Personal）**不能用账号密码在 CI 激活，官方也移除了 .alf 手动激活**。当前最可靠的方案是：**本地用国际版 Unity Hub 在线激活个人许可证，然后直接复用本地生成的 `.ulf` 文件**。
+Unity 6 个人许可证的 `.ulf` 会绑定本机硬件（含 MAC 地址），不能直接用于 CI。正确做法是从本地激活的 `.ulf` 里**提取序列号**，再用序列号 + 账号密码在 CI 上激活。
 
 ### 步骤 1：本地激活国际版个人许可证
 
-1. 从 <https://unity.com/download> 下载**国际版 Unity Hub**（注意：不是团结引擎 unity.cn 的 Hub，两套账号体系不通用）；
-2. 用你的**国际版 Unity ID**（unity.com 账号）登录；
-3. **Preferences（齿轮）→ Licenses → Add → Get a free personal license**，在线激活。
+1. 从 <https://unity.com/download> 下载**国际版 Unity Hub**（不是团结引擎 unity.cn 的 Hub，账号不通用）；
+2. 用国际版 Unity ID 登录；
+3. **Preferences → Licenses → Add → Get a free personal license** 在线激活。
 
-### 步骤 2：找到 .ulf 并确认不绑定机器
+### 步骤 2：提取序列号（serial）
 
-激活成功后，在资源管理器地址栏输入 `C:\ProgramData\Unity` 回车（`ProgramData` 是隐藏文件夹），用记事本打开 `Unity_lic.ulf`：
+打开 `C:\ProgramData\Unity\Unity_lic.ulf`，找到 `<DeveloperData Value="..."/>`，把 `Value` 的 base64 内容解码，去掉开头 4 字节（`AQAA`）后就是序列号。
 
-- 确认 `<MachineBindings>` 是**空的**（`<MachineBindings></MachineBindings>`）→ 表示绑定账号而非机器，可直接用于 CI；
-- 若里面有机器指纹，则需重新在线激活一次。
+例如 `Value="AQAAAEY0LVE2VE4tNE00QS1KUFJNLUZYSEgtV1JXUQ=="` 解码后得到 `F4-Q6TN-4M4A-JPRM-FXHH-WRWQ`。
 
-### 步骤 3：配置 secret
+### 步骤 3：配置三个 secret
 
-在 GitHub 仓库 **Settings → Secrets and variables → Actions → New repository secret**：
+在 GitHub 仓库 **Settings → Secrets and variables → Actions → New repository secret** 添加：
 
-- **Name**: `UNITY_LICENSE`
-- **Secret**: 粘贴 `.ulf` 的**完整内容**（含 `<?xml ...?>` 和 `<root> ... </root>`）
+- **Name**: `UNITY_SERIAL`  →  **Secret**: 上一步提取的序列号
+- **Name**: `UNITY_EMAIL`  →  **Secret**: 你的国际版 Unity ID 邮箱
+- **Name**: `UNITY_PASSWORD`  →  **Secret**: 你的 Unity ID 密码
 
-> 说明：`UNITY_EMAIL` / `UNITY_PASSWORD` 只对带序列号的 Pro/Plus 许可证有用；个人许可证只需 `UNITY_LICENSE`。
+> 说明：个人许可证虽然没有「购买」序列号，但 Unity 仍会为账号分配一个，藏在 `.ulf` 的 `DeveloperData` 里。CI 用它 + 账号密码在 runner 上重新激活。
 
 ## 触发构建
 
