@@ -20,25 +20,27 @@ unity-ci-test/
 
 ## 一次性配置：Unity 许可证（必须）
 
-Unity 6 的个人许可证（Personal）**没有序列号，不能用账号密码在 CI 里自动激活**，必须提供一个 `.ulf` 许可证文件。该文件绑定生成它的机器，所以要在 GitHub runner 上生成 `.alf` 再手动激活。
+Unity 6 的个人许可证（Personal）**不能用账号密码在 CI 激活，官方也移除了 .alf 手动激活**。当前最可靠的方案是：**本地用国际版 Unity Hub 在线激活个人许可证，然后直接复用本地生成的 `.ulf` 文件**。
 
-### 步骤 1：在 CI 上生成激活请求文件（.alf）
+### 步骤 1：本地激活国际版个人许可证
 
-1. 到 **Actions → Acquire activation file → Run workflow** 手动运行一次；
-2. 运行完成后进入该 run 的 **Artifacts** 区域，下载生成的 `.alf` 文件（如 `Unity_v6000.3.14f1.alf`）。
+1. 从 <https://unity.com/download> 下载**国际版 Unity Hub**（注意：不是团结引擎 unity.cn 的 Hub，两套账号体系不通用）；
+2. 用你的**国际版 Unity ID**（unity.com 账号）登录；
+3. **Preferences（齿轮）→ Licenses → Add → Get a free personal license**，在线激活。
 
-### 步骤 2：激活得到 .ulf
+### 步骤 2：找到 .ulf 并确认不绑定机器
 
-1. 浏览器打开 <https://license.unity3d.com/manual>，登录你的**国际版 Unity ID**；
-2. 上传刚才的 `.alf` 文件，许可证类型选 **Unity Personal Edition**，点 Next；
-3. 下载生成的 `.ulf` 文件。
+激活成功后，在资源管理器地址栏输入 `C:\ProgramData\Unity` 回车（`ProgramData` 是隐藏文件夹），用记事本打开 `Unity_lic.ulf`：
+
+- 确认 `<MachineBindings>` 是**空的**（`<MachineBindings></MachineBindings>`）→ 表示绑定账号而非机器，可直接用于 CI；
+- 若里面有机器指纹，则需重新在线激活一次。
 
 ### 步骤 3：配置 secret
 
 在 GitHub 仓库 **Settings → Secrets and variables → Actions → New repository secret**：
 
 - **Name**: `UNITY_LICENSE`
-- **Secret**: 用文本编辑器打开 `.ulf`，粘贴**完整内容**（含 `<?xml ...?>` 和 `<root> ... </root>`）
+- **Secret**: 粘贴 `.ulf` 的**完整内容**（含 `<?xml ...?>` 和 `<root> ... </root>`）
 
 > 说明：`UNITY_EMAIL` / `UNITY_PASSWORD` 只对带序列号的 Pro/Plus 许可证有用；个人许可证只需 `UNITY_LICENSE`。
 
