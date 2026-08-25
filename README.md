@@ -20,20 +20,31 @@ unity-ci-test/
 
 ## 一次性配置：Unity 许可证（必须）
 
-CI 构建需要一个**国际版 Unity 账号**，构建时用账号密码自动激活个人许可证（Personal License）。
+Unity 6 的个人许可证（Personal）**没有序列号，不能用账号密码在 CI 里自动激活**，必须提供一个 `.ulf` 许可证文件。该文件绑定生成它的机器，所以要在 GitHub runner 上生成 `.alf` 再手动激活。
 
-1. 到 <https://unity.com> 注册/登录一个 Unity ID（注意：国际版账号与团结引擎 unity.cn 账号是两套体系，不通用）。
-2. 在 GitHub 仓库 **Settings → Secrets and variables → Actions → New repository secret** 添加两个 secret：
-   - **Name**: `UNITY_EMAIL`  →  **Secret**: 你的 Unity ID 邮箱
-   - **Name**: `UNITY_PASSWORD`  →  **Secret**: 你的 Unity ID 密码
+### 步骤 1：在 CI 上生成激活请求文件（.alf）
 
-> 注意：
-> - 个人许可证（Personal）有同时激活机器数上限（一般 2 台）；如需频繁构建，可进一步配合缓存激活结果。
-> - 若账号密码激活失败，也欢迎改用 `UNITY_LICENSE`（手动激活的 `.ulf`）方式。
+1. 到 **Actions → Acquire activation file → Run workflow** 手动运行一次；
+2. 运行完成后进入该 run 的 **Artifacts** 区域，下载生成的 `.alf` 文件（如 `Unity_v6000.3.14f1.alf`）。
+
+### 步骤 2：激活得到 .ulf
+
+1. 浏览器打开 <https://license.unity3d.com/manual>，登录你的**国际版 Unity ID**；
+2. 上传刚才的 `.alf` 文件，许可证类型选 **Unity Personal Edition**，点 Next；
+3. 下载生成的 `.ulf` 文件。
+
+### 步骤 3：配置 secret
+
+在 GitHub 仓库 **Settings → Secrets and variables → Actions → New repository secret**：
+
+- **Name**: `UNITY_LICENSE`
+- **Secret**: 用文本编辑器打开 `.ulf`，粘贴**完整内容**（含 `<?xml ...?>` 和 `<root> ... </root>`）
+
+> 说明：`UNITY_EMAIL` / `UNITY_PASSWORD` 只对带序列号的 Pro/Plus 许可证有用；个人许可证只需 `UNITY_LICENSE`。
 
 ## 触发构建
 
-配置好 `UNITY_EMAIL` / `UNITY_PASSWORD` 两个 secret 后：
+配置好 `UNITY_LICENSE` secret 后：
 
 - **推送代码**到 `main` 分支会自动触发；
 - 也可以到 **Actions 标签页 → Build Android → Run workflow** 手动触发。
