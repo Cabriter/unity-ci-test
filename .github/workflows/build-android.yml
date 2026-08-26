@@ -23,7 +23,7 @@ jobs:
           restore-keys: |
             Library-Android-
 
-      # 构建 Android 包（需要 UNITY_LICENSE secret）
+      # 构建 Android 包（UNITY_SERIAL + 账号密码激活）
       - uses: game-ci/unity-builder@v4
         env:
           UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
@@ -41,3 +41,22 @@ jobs:
           name: Android
           path: build/Android
           retention-days: 14
+
+      # 构建结果通知到飞书群
+      - name: Notify Feishu
+        if: always()
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+        run: |
+          if [ -z "$FEISHU_WEBHOOK" ]; then
+            echo "FEISHU_WEBHOOK 未配置，跳过通知"
+            exit 0
+          fi
+          if [ "${{ job.status }}" = "success" ]; then
+            RESULT="构建成功 ✅"
+          else
+            RESULT="构建失败 ❌"
+          fi
+          curl -s -X POST "$FEISHU_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"Unity Android CI\n${RESULT}\nCommit: ${GITHUB_SHA:0:7}\n详情: https://github.com/Cabriter/unity-ci-test/actions/runs/${GITHUB_RUN_ID}\"}}"

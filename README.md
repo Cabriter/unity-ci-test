@@ -73,3 +73,12 @@ Unity -batchmode -quit -projectPath . \
 - **Unity 版本**：`6000.3.14f1`。若 game-ci 镜像不存在该版本，将 `ProjectVersion.txt` 和 workflow 里的 `unityVersion` 一并改成一个可用的 `6000.x` 版本。
 - **Scripting Backend**：Unity 6 的 Android 默认使用 IL2CPP，game-ci 镜像已内置 Android SDK/NDK/JDK，无需额外配置。
 - **签名**：当前是 debug 构建（未配置 keystore），APK 可直接安装用于流程验证。
+
+## 飞书群通知（可选）
+
+构建完成后可自动发通知到飞书群（成功/失败 + 详情链接）。
+
+1. 飞书群 → 设置 → 群机器人 → 添加机器人 → **自定义机器人**，设置名称后复制 **Webhook 地址**；
+2. GitHub 仓库 **Settings → Secrets and variables → Actions → New repository secret**：
+   - **Name**: `FEISHU_WEBHOOK`
+   - **Secret**: 粘贴 webhook 地址（`https://open.feishu.cn/open-apis/bot/v2/hook/...`）
