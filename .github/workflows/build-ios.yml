@@ -1,0 +1,58 @@
+name: Build iOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # 缓存 Library 目录，加速重复构建
+      - uses: actions/cache@v4
+        with:
+          path: Library
+          key: Library-iOS-${{ hashFiles('Packages/manifest.json') }}
+          restore-keys: |
+            Library-iOS-
+
+      # 构建 iOS Xcode 工程（不签名，仅验证流程）
+      - uses: game-ci/unity-builder@v4
+        env:
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: .
+          unityVersion: 6000.3.14f1
+          targetPlatform: iOS
+          buildMethod: BuildCommand.Build
+
+      # 上传 Xcode 工程作为 artifact
+      - uses: actions/upload-artifact@v4
+        with:
+          name: iOS-XcodeProject
+          path: build/iOS
+          retention-days: 14
+
+      # 构建结果通知到飞书群
+      - name: Notify Feishu
+        if: always()
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+        run: |
+          if [ -z "$FEISHU_WEBHOOK" ]; then
+            echo "FEISHU_WEBHOOK 未配置，跳过通知"
+            exit 0
+          fi
+          if [ "${{ job.status }}" = "success" ]; then
+            RESULT="构建成功 ✅"
+          else
+            RESULT="构建失败 ❌"
+          fi
+          curl -s -X POST "$FEISHU_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"Unity iOS CI\n${RESULT}\nCommit: ${GITHUB_SHA:0:7}\n详情: https://github.com/Cabriter/unity-ci-test/actions/runs/${GITHUB_RUN_ID}\"}}"

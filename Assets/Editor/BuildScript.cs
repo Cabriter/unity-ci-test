@@ -13,6 +13,7 @@ using UnityEngine;
 public static class BuildCommand
 {
     private const string Android = "Android";
+    private const string Ios = "iOS";
 
     private static string GetArgument(string name)
     {
@@ -44,9 +45,15 @@ public static class BuildCommand
         }
 
         Console.WriteLine(":: Build target: " + name);
-        return name.Equals(Android, StringComparison.OrdinalIgnoreCase)
-            ? BuildTarget.Android
-            : BuildTarget.NoTarget;
+        if (name.Equals(Android, StringComparison.OrdinalIgnoreCase))
+        {
+            return BuildTarget.Android;
+        }
+        if (name.Equals(Ios, StringComparison.OrdinalIgnoreCase))
+        {
+            return BuildTarget.iOS;
+        }
+        return BuildTarget.NoTarget;
     }
 
     private static string GetBuildPath()
@@ -79,8 +86,15 @@ public static class BuildCommand
         string buildPath = GetBuildPath();
         string buildName = GetBuildName();
 
-        // 显式指定 Android 包名，避免默认 com.DefaultCompany.* 的潜在问题
-        PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.cabriter.unitycitest");
+        // 显式指定包名，避免默认 com.DefaultCompany.* 的潜在问题
+        if (buildTarget == BuildTarget.Android)
+        {
+            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.Android, "com.cabriter.unitycitest");
+        }
+        else if (buildTarget == BuildTarget.iOS)
+        {
+            PlayerSettings.SetApplicationIdentifier(BuildTargetGroup.iOS, "com.cabriter.unitycitest");
+        }
 
         string[] scenes = GetEnabledScenes();
         if (scenes.Length == 0)
